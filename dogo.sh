@@ -10,7 +10,7 @@ cat << __EOT__
     go install $1
 __EOT__
 
-go install github.com/user/$1
+go install $1
 
 cat << __EOT__
     run $1

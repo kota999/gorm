@@ -10,7 +10,7 @@ cat << __EOT__
     vi $1.go
 __EOT__
 
-mkdir src/github.com/user/$1
-vi src/github.com/user/$1/$1.go
+mkdir src/$1
+vi src/$1/$1.go
 
 exit 0

@@ -11,6 +11,6 @@ cat << __EOT__
 
 __EOT__
 
-go run src/github.com/user/$1/$1.go
+go run $1.go
 
 exit 0
