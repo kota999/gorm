@@ -34,6 +34,7 @@ Options :
   For backup options
 
     -box                ... register your trash-box directory
+                            if use this option, rt command skip other options
 
     -c, -C              ... clear your trash-box directory
 
