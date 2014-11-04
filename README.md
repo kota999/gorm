@@ -26,19 +26,19 @@ You need export GOROOT, GOPATH in conjunction with the your environment.
 Options :
 
 
-  * For Remove options
+    * For Remove options
 
-    -r, -R              ... remove and backup all files and directories in dirName recursively
+        -r, -R              ... remove and backup all files and directories in dirName recursively
 
-    -v                  ... print names of remove and backup all files and directories
+        -v                  ... print names of remove and backup all files and directories
 
 
-  * For backup options
+    * For backup options
 
-    -box                ... register your trash-box directory
-                            if use this option, rt command skip other options
+        -box                ... register your trash-box directory
+                                if use this option, rt command skip other options
 
-    -c, -C              ... clear your trash-box directory
+        -c, -C              ... clear your trash-box directory
 
 
 
