@@ -18,6 +18,8 @@ Installation :
 
     git clone git://github.com/kota999/rt.git
 
+    go install rt
+
 You need export GOROOT, GOPATH in conjunction with the your environment.
 
 
