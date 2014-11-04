@@ -7,10 +7,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
-const CFG_FILE = ".thrw"
-const DEFAULT_DIR = ".trash"
+var (
+	HOME        = os.Getenv("HOME")
+	CFG_FILE    = HOME + "/.thrw"
+	DEFAULT_DIR = HOME + "/.trashbox"
+)
 
 func make_trash_box(dirName string) {
 	//if err := os.Mkdir(dirName, 0777); err != nil {
@@ -60,27 +64,16 @@ func set_newname(oldName, dirName string) string {
 	return buffer.String()
 }
 
-func main() {
-
-	var (
-		trashBoxName  string
-		trashBoxClear bool
-		thrwFlagf     bool
-		thrwFlagr     bool
-		thrwFlagv     bool
-	)
-
-	flag.StringVar(&trashBoxName, "box", "blank", "trash box name")
-	flag.BoolVar(&trashBoxClear, "c", false, "clear trash box")
-	flag.BoolVar(&thrwFlagf, "f", false, "ignore warning")
-	flag.BoolVar(&thrwFlagr, "r", false, "throw away directory, recursively")
-	if thrwFlagr == false {
-		flag.BoolVar(&thrwFlagr, "R", false, "throw away directory, recursively")
-	}
-	flag.BoolVar(&thrwFlagv, "v", false, "show file name before throw away")
-	flag.Parse()
-
-	if trashBoxName != "blank" {
+func set_trashBox_cfg(trashBoxName string) string {
+	if trashBoxName != "" {
+		fmt.Println("you setted trash-box directory option, so throw-away and trash-box clear options are not effective.")
+		fmt.Println("")
+		if exist_file(trashBoxName) && isDirectory(trashBoxName) == false {
+			fmt.Println("your option directory is existed as file type,")
+			fmt.Println("trash box dir is setted .trash .")
+			fmt.Println("")
+			trashBoxName = DEFAULT_DIR
+		}
 		write_cfg(trashBoxName)
 	} else if exist_file(CFG_FILE) {
 		trashBoxName = read_cfg()
@@ -89,31 +82,91 @@ func main() {
 		write_cfg(trashBoxName)
 	}
 	make_trash_box(trashBoxName)
+	return trashBoxName
+}
 
-	for i := 0; i < flag.NArg(); i++ {
-		if thrwFlagv {
-			fmt.Println(flag.Args()[i])
+func remove(path, newpath string) {
+	if exist_file(newpath) {
+		Reremove(path, newpath, 1)
+	} else {
+		if err := os.Rename(path, newpath); err != nil {
+			fmt.Println(newpath)
+			fmt.Println(err)
 		}
-		newname := set_newname(flag.Args()[i], trashBoxName)
-		if exist_file(flag.Args()[i]) {
-			if isDirectory(flag.Args()[i]) == true {
-				if thrwFlagr {
-					//fmt.Println(newname)
-					if err := os.Rename(flag.Args()[i], newname); err != nil {
-						fmt.Println(err)
+	}
+}
+
+func Reremove(path string, newpath string, i int) {
+	if exist_file(newpath + "." + strconv.Itoa(i)) {
+		Reremove(path, newpath, i+1)
+	} else {
+		if err := os.Rename(path, newpath+"."+strconv.Itoa(i)); err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+func main() {
+
+	var (
+		trashBoxName  string
+		trashBoxCfg   bool
+		trashBoxClear bool
+		thrwFlagf     bool
+		thrwFlagr     bool
+		thrwFlagv     bool
+	)
+
+	flag.StringVar(&trashBoxName, "box", "", "trash box name")
+	flag.BoolVar(&trashBoxClear, "c", false, "clear trash box")
+	flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
+	flag.BoolVar(&thrwFlagf, "f", false, "ignore warning")
+	flag.BoolVar(&thrwFlagr, "r", false, "throw away directory, recursively")
+	if thrwFlagr == false {
+		flag.BoolVar(&thrwFlagr, "R", false, "throw away directory, recursively")
+	}
+	flag.BoolVar(&thrwFlagv, "v", false, "show file name before throw away")
+	flag.Parse()
+	if trashBoxName == "" {
+		trashBoxCfg = false
+	} else if trashBoxName == "-c" || trashBoxName == "-C" {
+		trashBoxName = ""
+		trashBoxCfg = false
+	} else if trashBoxName == "-r" || trashBoxName == "-R" {
+		trashBoxName = ""
+		trashBoxCfg = false
+	} else if trashBoxName == "-f" || trashBoxName == "-v" {
+		trashBoxName = ""
+		trashBoxCfg = false
+	} else {
+		trashBoxCfg = true
+	}
+
+	trashBoxName = set_trashBox_cfg(trashBoxName)
+
+	if trashBoxCfg == false {
+		for i := 0; i < flag.NArg(); i++ {
+			if thrwFlagv {
+				fmt.Println(flag.Args()[i])
+			}
+			newname := set_newname(flag.Args()[i], trashBoxName)
+			if exist_file(flag.Args()[i]) {
+				if isDirectory(flag.Args()[i]) == true {
+					if thrwFlagr {
+						remove(flag.Args()[i], newname)
+					} else {
+						fmt.Println(flag.Args()[i], "is directory. If you need throw away, use option -r or -R")
 					}
 				} else {
-					fmt.Println(flag.Args()[i], "is directory. If you need throw away, use option -r or -R")
+					remove(flag.Args()[i], newname)
 				}
 			} else {
-				os.Rename(flag.Args()[i], newname)
+				fmt.Println(flag.Args()[i], "is not exist.")
 			}
-		} else {
-			fmt.Println(flag.Args()[i], "is not exist.")
 		}
 	}
 
-	if trashBoxClear {
+	if trashBoxClear && trashBoxCfg == false {
 		if err := os.RemoveAll(set_newname("", trashBoxName)); err != nil {
 			fmt.Println(err)
 		}
