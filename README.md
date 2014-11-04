@@ -39,14 +39,17 @@ Options :
     -c, -C              ... clear your trash-box directory
 
 
+
 Infomation :
 
-The config file of rt is $HOME/.thrw, your trash-box path is written by .thrw .
+* The config file of rt is $HOME/.thrw, your trash-box path is written by .thrw .
 And the default trash-box directory is $HOME/.trashbox .
 
-In backup to your trash-box directory, rt command avoid fileName dupication . If there is a file test.txt and your command is
+* In backup to your trash-box directory, rt command avoid fileName dupication . If there is a file test.txt and your command is
 
     rt test.txt
 
 , rt command backup test.txt to test.txt.1 . And likewise, exist also test.txt.1 in your trash-box, backup test.txt to test.txt.2 .
+
+* This command is not support the synthesis of multiple options, such ad -rv.
 
