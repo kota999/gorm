@@ -54,5 +54,5 @@ And the default trash-box directory is $HOME/.trashbox .
 
     , rt command backup test.txt to test.txt.1 . And likewise, exist also test.txt.1 in your trash-box, backup test.txt to test.txt.2 .
 
-* This command is not support the compose of multiple options, such as -rv.
+* This command is not support the composition of multiple options, such as -rv.
 
