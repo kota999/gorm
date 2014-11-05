@@ -12,7 +12,7 @@ import (
 
 var (
 	HOME        = os.Getenv("HOME")
-	CFG_FILE    = HOME + "/.thrw"
+	CFG_FILE    = HOME + "/.rt"
 	DEFAULT_DIR = HOME + "/.trashbox"
 )
 
@@ -79,8 +79,8 @@ func set_trashBox_cfg(trashBoxName string) string {
 	return trashBoxName
 }
 
-func show_path(path string, thrwFlagv bool) {
-	if thrwFlagv {
+func show_path(path string, rtFlagv bool) {
+	if rtFlagv {
 		fmt.Println(path)
 	}
 }
@@ -106,11 +106,11 @@ func Reremove(path string, newpath string, i int) {
 	}
 }
 
-func operation_of_remove(path string, trashBoxName string, thrwFlagr bool) {
+func operation_of_remove(path string, trashBoxName string, rtFlagr bool) {
 	newpath := trashBoxName + "/" + path
 	if exist_file(path) {
 		if isDirectory(path) == true {
-			if thrwFlagr {
+			if rtFlagr {
 				remove(path, newpath)
 			} else {
 				fmt.Println(path, "is directory. If you need throw away, use option -r or -R")
@@ -136,16 +136,17 @@ func main() {
 		trashBoxName  string
 		trashBoxCfg   bool
 		trashBoxClear bool
-		thrwFlagr     bool
-		thrwFlagv     bool
+		rtFlagr       bool
+		rtFlagv       bool
 	)
 
 	flag.StringVar(&trashBoxName, "box", "", "trash box name")
 	flag.BoolVar(&trashBoxClear, "c", false, "clear trash box")
 	flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
-	flag.BoolVar(&thrwFlagr, "r", false, "throw away directory, recursively")
-	flag.BoolVar(&thrwFlagr, "R", false, "throw away directory, recursively")
-	flag.BoolVar(&thrwFlagv, "v", false, "show file name before throw away")
+	flag.BoolVar(&rtFlagr, "r", false, "throw away directory, recursively")
+	flag.BoolVar(&rtFlagr, "R", false, "throw away directory, recursively")
+	flag.BoolVar(&rtFlagv, "v", false, "show file name before throw away")
+
 	flag.Parse()
 
 	if trashBoxName == "" {
@@ -161,8 +162,8 @@ func main() {
 
 	if trashBoxCfg == false {
 		for i := 0; i < flag.NArg(); i++ {
-			show_path(flag.Args()[i], thrwFlagv)
-			operation_of_remove(flag.Args()[i], trashBoxName, thrwFlagr)
+			show_path(flag.Args()[i], rtFlagv)
+			operation_of_remove(flag.Args()[i], trashBoxName, rtFlagr)
 		}
 	}
 
