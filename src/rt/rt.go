@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -17,9 +17,6 @@ var (
 )
 
 func make_trash_box(dirName string) {
-	//if err := os.Mkdir(dirName, 0777); err != nil {
-	//fmt.Println(" directory is already exist !")
-	//}
 	os.Mkdir(dirName, 0777)
 }
 
@@ -56,14 +53,6 @@ func write_cfg(dirName string) {
 	writer.Flush()
 }
 
-func set_newname(oldName, dirName string) string {
-	var buffer bytes.Buffer
-	buffer.WriteString(dirName)
-	buffer.WriteString("/")
-	buffer.WriteString(oldName)
-	return buffer.String()
-}
-
 func set_trashBox_cfg(trashBoxName string) string {
 	if trashBoxName != "" {
 		fmt.Println("you setted trash-box directory option, so throw-away and trash-box clear options are not effective.")
@@ -75,14 +64,25 @@ func set_trashBox_cfg(trashBoxName string) string {
 			trashBoxName = DEFAULT_DIR
 		}
 		write_cfg(trashBoxName)
+
 	} else if exist_file(CFG_FILE) {
 		trashBoxName = read_cfg()
+
 	} else {
 		trashBoxName = DEFAULT_DIR
 		write_cfg(trashBoxName)
+
 	}
+
 	make_trash_box(trashBoxName)
+
 	return trashBoxName
+}
+
+func show_path(path string, thrwFlagv bool) {
+	if thrwFlagv {
+		fmt.Println(path)
+	}
 }
 
 func remove(path, newpath string) {
@@ -106,13 +106,36 @@ func Reremove(path string, newpath string, i int) {
 	}
 }
 
+func operation_of_remove(path string, trashBoxName string, thrwFlagr bool) {
+	newpath := trashBoxName + "/" + path
+	if exist_file(path) {
+		if isDirectory(path) == true {
+			if thrwFlagr {
+				remove(path, newpath)
+			} else {
+				fmt.Println(path, "is directory. If you need throw away, use option -r or -R")
+			}
+		} else {
+			remove(path, newpath)
+		}
+	} else {
+		fmt.Println(path, "is not exist.")
+	}
+}
+
+func clear_trash(trashBoxName string) {
+	if err := os.RemoveAll(trashBoxName + "/"); err != nil {
+		fmt.Println(err)
+	}
+	os.Mkdir(trashBoxName, 0777)
+}
+
 func main() {
 
 	var (
 		trashBoxName  string
 		trashBoxCfg   bool
 		trashBoxClear bool
-		thrwFlagf     bool
 		thrwFlagr     bool
 		thrwFlagv     bool
 	)
@@ -120,22 +143,14 @@ func main() {
 	flag.StringVar(&trashBoxName, "box", "", "trash box name")
 	flag.BoolVar(&trashBoxClear, "c", false, "clear trash box")
 	flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
-	flag.BoolVar(&thrwFlagf, "f", false, "ignore warning")
 	flag.BoolVar(&thrwFlagr, "r", false, "throw away directory, recursively")
-	if thrwFlagr == false {
-		flag.BoolVar(&thrwFlagr, "R", false, "throw away directory, recursively")
-	}
+	flag.BoolVar(&thrwFlagr, "R", false, "throw away directory, recursively")
 	flag.BoolVar(&thrwFlagv, "v", false, "show file name before throw away")
 	flag.Parse()
+
 	if trashBoxName == "" {
 		trashBoxCfg = false
-	} else if trashBoxName == "-c" || trashBoxName == "-C" {
-		trashBoxName = ""
-		trashBoxCfg = false
-	} else if trashBoxName == "-r" || trashBoxName == "-R" {
-		trashBoxName = ""
-		trashBoxCfg = false
-	} else if trashBoxName == "-f" || trashBoxName == "-v" {
+	} else if strings.HasPrefix(trashBoxName, "-") {
 		trashBoxName = ""
 		trashBoxCfg = false
 	} else {
@@ -146,30 +161,12 @@ func main() {
 
 	if trashBoxCfg == false {
 		for i := 0; i < flag.NArg(); i++ {
-			if thrwFlagv {
-				fmt.Println(flag.Args()[i])
-			}
-			newname := set_newname(flag.Args()[i], trashBoxName)
-			if exist_file(flag.Args()[i]) {
-				if isDirectory(flag.Args()[i]) == true {
-					if thrwFlagr {
-						remove(flag.Args()[i], newname)
-					} else {
-						fmt.Println(flag.Args()[i], "is directory. If you need throw away, use option -r or -R")
-					}
-				} else {
-					remove(flag.Args()[i], newname)
-				}
-			} else {
-				fmt.Println(flag.Args()[i], "is not exist.")
-			}
+			show_path(flag.Args()[i], thrwFlagv)
+			operation_of_remove(flag.Args()[i], trashBoxName, thrwFlagr)
 		}
 	}
 
 	if trashBoxClear && trashBoxCfg == false {
-		if err := os.RemoveAll(set_newname("", trashBoxName)); err != nil {
-			fmt.Println(err)
-		}
-		os.Mkdir(trashBoxName, 0777)
+		clear_trash(trashBoxName)
 	}
 }
