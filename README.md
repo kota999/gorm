@@ -1,4 +1,5 @@
 rt command is remove + backup command.
+Rename thrw ---> rt .
 
 
 Simple Useage :
@@ -53,5 +54,5 @@ And the default trash-box directory is $HOME/.trashbox .
 
     , rt command backup test.txt to test.txt.1 . And likewise, exist also test.txt.1 in your trash-box, backup test.txt to test.txt.2 .
 
-* This command is not support the synthesis of multiple options, such ad -rv.
+* This command is not support the synthesis of multiple options, such as -rv.
 
