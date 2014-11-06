@@ -45,7 +45,7 @@ Options :
 
 Infomation :
 
-* The config file of gorm is $HOME/.gorm, your trash-box path is written by .gorm .
+* The config file of gorm is $HOME/.gorm, your trash-box path is written .
 And the default trash-box directory is $HOME/.trashbox .
 
 * In backup to your trash-box directory, gorm command avoid fileName dupication . If there is a file test.txt and your command is
