@@ -1,25 +1,25 @@
-rt command is remove + backup command.
-Rename thrw ---> rt .
+gorm command is remove + backup command.
+Rename thrw ---> gorm .
 
 
 Simple Useage :
 
 
-    rt [fileName]       ... remove filename and backup in $HOME/.trashbox (default)
+    gorm [fileName]       ... remove filename and backup in $HOME/.trashbox (default)
 
-    rt -r [fileName]    ... remove directory and backup in $HOME/.trashbox (default)
+    gorm -r [fileName]    ... remove directory and backup in $HOME/.trashbox (default)
 
-    rt -box=[dirName]   ... register your trash-box directory
+    gorm -box=[dirName]   ... register your trash-box directory
 
-    rt -c               ... clear your trash-box
+    gorm -c               ... clear your trash-box
 
 
 Installation :
 
 
-    git clone git://github.com/kota999/rt.git
+    git clone git://github.com/kota999/gorm.git
 
-    go install rt
+    go install gorm
 
 You need export GOROOT, GOPATH in conjunction with the your environment.
 
@@ -37,7 +37,7 @@ Options :
   * For backup options
 
         -box                ... register your trash-box directory
-                                if use this option, rt command skip other options
+                                if use this option, gorm command skip other options
 
         -c, -C              ... clear your trash-box directory
 
@@ -45,14 +45,14 @@ Options :
 
 Infomation :
 
-* The config file of rt is $HOME/.rt, your trash-box path is written by .rt .
+* The config file of gorm is $HOME/.gorm, your trash-box path is written by .gorm .
 And the default trash-box directory is $HOME/.trashbox .
 
-* In backup to your trash-box directory, rt command avoid fileName dupication . If there is a file test.txt and your command is
+* In backup to your trash-box directory, gorm command avoid fileName dupication . If there is a file test.txt and your command is
 
-        rt test.txt
+        gorm test.txt
 
-    , rt command backup test.txt to test.txt.1 . And likewise, exist also test.txt.1 in your trash-box, backup test.txt to test.txt.2 .
+    , gorm command backup test.txt to test.txt.1 . And likewise, exist also test.txt.1 in your trash-box, backup test.txt to test.txt.2 .
 
 * This command is not support the composition of multiple options, such as -rv.
 
