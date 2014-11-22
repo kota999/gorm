@@ -12,9 +12,10 @@ import (
 )
 
 var (
-	HOME        = os.Getenv("HOME")
-	CFG_FILE    = HOME + "/.gorm"
-	DEFAULT_DIR = HOME + "/.trashbox"
+	GORM_EXTENDED = ".gorm"
+	HOME          = os.Getenv("HOME")
+	CFG_FILE      = HOME + "/" + GORM_EXTENDED
+	DEFAULT_DIR   = HOME + "/.trashbox"
 )
 
 func make_trash_box(dirName string) {
@@ -48,9 +49,19 @@ func write_cfg(dirName string) {
 	var writer *bufio.Writer
 	dirVec := []byte(dirName)
 
-	write_file, _ := os.OpenFile(CFG_FILE, os.O_WRONLY|os.O_CREATE, 0600)
-	writer = bufio.NewWriter(write_file)
+	writeFile, _ := os.OpenFile(CFG_FILE, os.O_WRONLY|os.O_CREATE, 0600)
+	writer = bufio.NewWriter(writeFile)
 	writer.Write(dirVec)
+	writer.Flush()
+}
+
+func write_filePath(fullPath, filePathCfg string) {
+	var writer *bufio.Writer
+	fullPathVec := []byte(fullPath)
+
+	writeFile, _ := os.OpenFile(filePathCfg+GORM_EXTENDED, os.O_WRONLY|os.O_CREATE, 0600)
+	writer = bufio.NewWriter(writeFile)
+	writer.Write(fullPathVec)
 	writer.Flush()
 }
 
@@ -86,40 +97,45 @@ func show_path(path string, gormFlagv bool) {
 	}
 }
 
-func remove(path, newpath string) {
-	if exist_file(newpath) {
-		Reremove(path, newpath, 1)
+func remove(path, newPath string) {
+	if exist_file(newPath) {
+		Reremove(path, newPath, 1)
 	} else {
-		if err := os.Rename(path, newpath); err != nil {
-			fmt.Println(newpath)
+		if err := os.Rename(path, newPath); err != nil {
+			fmt.Println(newPath)
 			fmt.Println(err)
+		} else {
+			fullPath, _ := filepath.Abs(path)
+			write_filePath(fullPath, newPath)
 		}
 	}
 }
 
-func Reremove(path string, newpath string, i int) {
-	if exist_file(newpath + "." + strconv.Itoa(i)) {
-		Reremove(path, newpath, i+1)
+func Reremove(path string, newPath string, i int) {
+	if exist_file(newPath + "." + strconv.Itoa(i)) {
+		Reremove(path, newPath, i+1)
 	} else {
-		if err := os.Rename(path, newpath+"."+strconv.Itoa(i)); err != nil {
+		if err := os.Rename(path, newPath+"."+strconv.Itoa(i)); err != nil {
 			fmt.Println(err)
+		} else {
+			fullPath, _ := filepath.Abs(path)
+			write_filePath(fullPath, newPath+"."+strconv.Itoa(i))
 		}
 	}
 }
 
 func operation_of_remove(path string, trashBoxName string, gormFlagr bool) {
-	fullpath, _ := filepath.Abs(path)
-	filename := filepath.Base(fullpath)
-	newpath := trashBoxName + "/" + filename
+	filename := filepath.Base(path)
+	newPath := trashBoxName + "/" + filename
 	if exist_file(path) {
 		if isDirectory(path) == true {
 			if gormFlagr {
-				remove(path, newpath)
+				remove(path, newPath)
 			} else {
 				fmt.Println(path, "is directory. If you need throw away, use option -r or -R")
 			}
 		} else {
-			remove(path, newpath)
+			remove(path, newPath)
 		}
 	} else {
 		fmt.Println(path, "is not exist.")
@@ -145,18 +161,13 @@ func main() {
 
 	flag.StringVar(&trashBoxName, "box", "", "trash box name")
 	flag.BoolVar(&trashBoxClear, "c", false, "clear trash box")
+	flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
 	flag.BoolVar(&gormFlagr, "r", false, "throw away directory, recursively")
+	flag.BoolVar(&gormFlagr, "R", false, "throw away directory, recursively")
 	flag.BoolVar(&gormFlagv, "v", false, "show file name before throw away")
+	flag.BoolVar(&gormFlagv, "V", false, "show file name before throw away")
 
 	flag.Parse()
-	if trashBoxClear == false {
-		flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
-		flag.Parse()
-	}
-	if gormFlagr == false {
-		flag.BoolVar(&gormFlagr, "R", false, "throw away directory, recursively")
-		flag.Parse()
-	}
 
 	if trashBoxName == "" {
 		trashBoxCfg = false
