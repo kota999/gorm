@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -107,7 +108,9 @@ func Reremove(path string, newpath string, i int) {
 }
 
 func operation_of_remove(path string, trashBoxName string, gormFlagr bool) {
-	newpath := trashBoxName + "/" + path
+	fullpath, _ := filepath.Abs(path)
+	filename := filepath.Base(fullpath)
+	newpath := trashBoxName + "/" + filename
 	if exist_file(path) {
 		if isDirectory(path) == true {
 			if gormFlagr {
@@ -142,12 +145,18 @@ func main() {
 
 	flag.StringVar(&trashBoxName, "box", "", "trash box name")
 	flag.BoolVar(&trashBoxClear, "c", false, "clear trash box")
-	flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
 	flag.BoolVar(&gormFlagr, "r", false, "throw away directory, recursively")
-	flag.BoolVar(&gormFlagr, "R", false, "throw away directory, recursively")
 	flag.BoolVar(&gormFlagv, "v", false, "show file name before throw away")
 
 	flag.Parse()
+	if trashBoxClear == false {
+		flag.BoolVar(&trashBoxClear, "C", false, "clear trash box")
+		flag.Parse()
+	}
+	if gormFlagr == false {
+		flag.BoolVar(&gormFlagr, "R", false, "throw away directory, recursively")
+		flag.Parse()
+	}
 
 	if trashBoxName == "" {
 		trashBoxCfg = false
