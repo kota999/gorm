@@ -16,10 +16,12 @@ var (
 	HOME          = os.Getenv("HOME")
 	CFG_FILE      = HOME + "/" + GORM_EXTENDED
 	DEFAULT_DIR   = HOME + "/.trashbox"
+	FILE_PATH_DIR = ".prefix"
 )
 
 func make_trash_box(dirName string) {
 	os.Mkdir(dirName, 0777)
+	os.Mkdir(dirName+"/"+FILE_PATH_DIR, 0777)
 }
 
 func exist_file(name string) bool {
