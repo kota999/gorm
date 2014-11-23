@@ -116,18 +116,28 @@ func check_name(names []string, pattern string) string {
 	return ""
 }
 
-func check_locate(name, prefixName, trashBoxName string) string {
-	fmt.Print(name, " 's original location : ")
+func check_locate(name, prefixName, trashBoxName string, gormFlagv bool) string {
 	readerFile, _ := os.OpenFile(trashBoxName+FILE_PATH_DIR+"/"+prefixName, os.O_RDONLY, 0600)
 	reader := bufio.NewReader(readerFile)
 	contents, _, _ := reader.ReadLine()
 	contents_str := string(contents)
-	if contents_str == "" {
-		fmt.Println("do not know original location")
-	} else {
-		fmt.Println(contents_str)
+	if gormFlagv {
+		fmt.Print(name, " 's original location : ")
+		if contents_str == "" {
+			fmt.Println("do not know original location")
+		} else {
+			fmt.Println(contents_str)
+		}
 	}
 	return contents_str
+}
+
+func check_can_recov(contents_str string) bool {
+	if contents_str == "" {
+		return false
+	} else {
+		return true
+	}
 }
 
 func show_selector(canRecovs []bool, fileNamesLen int) {
@@ -179,12 +189,19 @@ func undo(name, contents_str, trashBoxName string) {
 			fmt.Println(err)
 		} else {
 			os.Remove(trashBoxName + FILE_PATH_DIR + "/" + name + GORM_EXTENDED)
+			fmt.Println("--> finish recovering to", contents_str)
 		}
 	}
 }
 
 func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
-	fmt.Println("*** recovering", filename, "***")
+	var (
+		i            int
+		index        int
+		name         string
+		contents_str string
+	)
+	fmt.Println("--> recovering", filename)
 	fileInfo, _ := ioutil.ReadDir(trashBoxName)
 	fileInfoPrefix, _ := ioutil.ReadDir(trashBoxName + FILE_PATH_DIR)
 	fileNames, fileNamesLen := check_match(fileInfo, filename)
@@ -196,25 +213,17 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 		fmt.Println("you will recover manually")
 	} else {
 		var canRecovs = make([]bool, fileNamesLen)
-		for i, name := range fileNames {
+		for i, name = range fileNames {
 			fmt.Printf("(%d) ", i)
 			prefixName := check_name(filePrefixNames, name)
-			if fileNamesLen == 1 {
-				contents_str := check_locate(name, prefixName, trashBoxName)
-				undo(name, contents_str, trashBoxName)
-			} else {
-				if contents_str := check_locate(name, prefixName, trashBoxName); contents_str == "" {
-					canRecovs[i] = false
-				} else {
-					canRecovs[i] = true
-				}
-
-			}
+			contents_str = check_locate(name, prefixName, trashBoxName, gormFlagv)
+			canRecovs[i] = check_can_recov(contents_str)
 		}
 		if fileNamesLen != 1 {
-			index := get_index_from_selector(canRecovs, fileNamesLen)
-			fmt.Println(index)
+			index = get_index_from_selector(canRecovs, fileNamesLen)
+			name = fileNames[index]
 		}
+		undo(name, contents_str, trashBoxName)
 	}
 }
 
