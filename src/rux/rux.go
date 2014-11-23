@@ -201,7 +201,7 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 		name         string
 		contents_str string
 	)
-	fmt.Println("--> recovering", filename)
+	fmt.Println("--> recovering", filename+"*")
 	fileInfo, _ := ioutil.ReadDir(trashBoxName)
 	fileInfoPrefix, _ := ioutil.ReadDir(trashBoxName + FILE_PATH_DIR)
 	fileNames, fileNamesLen := check_match(fileInfo, filename)
