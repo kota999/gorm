@@ -124,7 +124,7 @@ func check_locate(name, prefixName, trashBoxName string, gormFlagv bool) string 
 	if gormFlagv {
 		fmt.Print(name, " 's original location : ")
 		if contents_str == "" {
-			fmt.Println("do not know original location")
+			fmt.Println("do not know original location, you will recover manually")
 		} else {
 			fmt.Println(contents_str)
 		}
@@ -214,9 +214,11 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 	} else {
 		var canRecovs = make([]bool, fileNamesLen)
 		for i, name = range fileNames {
-			fmt.Printf("(%d) ", i)
+			if fileNamesLen != 1 {
+				fmt.Printf("(%d) ", i)
+			}
 			prefixName := check_name(filePrefixNames, name)
-			contents_str = check_locate(name, prefixName, trashBoxName, gormFlagv)
+			contents_str = check_locate(name, prefixName, trashBoxName, gormFlagv || fileNamesLen != 1)
 			canRecovs[i] = check_can_recov(contents_str)
 		}
 		if fileNamesLen != 1 {
