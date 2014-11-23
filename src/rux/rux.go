@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 )
 
 var (
@@ -129,6 +130,46 @@ func check_locate(name, prefixName, trashBoxName string) string {
 	return contents_str
 }
 
+func show_selector(canRecovs []bool, fileNamesLen int) {
+	fmt.Print("you will select one from (")
+	for i, canRecov := range canRecovs {
+		if canRecov {
+			fmt.Print(i)
+			if i != fileNamesLen-1 {
+				fmt.Print(", ")
+			}
+		}
+	}
+	fmt.Print(") > ")
+}
+
+func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
+	show_selector(canRecovs, fileNamesLen)
+	var (
+		str   string
+		index int
+		err   error
+	)
+
+	for {
+		if _, err := fmt.Scanf("%s", &str); err != nil {
+			fmt.Println(err)
+		}
+		index, err = strconv.Atoi(str)
+		if err != nil {
+			fmt.Println(err)
+		} else if index < 0 || index >= fileNamesLen {
+			fmt.Println("Error: this number is invalid range")
+		} else if canRecovs[index] {
+			break
+		} else {
+			fmt.Println("Error: this option do not know original location")
+		}
+		show_selector(canRecovs, fileNamesLen)
+	}
+	return index
+}
+
 func undo(name, contents_str, trashBoxName string) {
 	if exist_file(contents_str) {
 		fmt.Println("Error:", contents_str, "is already exist")
@@ -143,7 +184,7 @@ func undo(name, contents_str, trashBoxName string) {
 }
 
 func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
-	fmt.Println("***", filename, "recovering ***")
+	fmt.Println("*** recovering", filename, "***")
 	fileInfo, _ := ioutil.ReadDir(trashBoxName)
 	fileInfoPrefix, _ := ioutil.ReadDir(trashBoxName + FILE_PATH_DIR)
 	fileNames, fileNamesLen := check_match(fileInfo, filename)
@@ -152,17 +193,27 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 		fmt.Println("Error:", filename, "is not backup")
 	} else if filePrefixNamesLen == 0 {
 		fmt.Println("Error: do not know", filename, "'s original location")
-		fmt.Println("you will manuary recover")
+		fmt.Println("you will recover manually")
 	} else {
-		for _, name := range fileNames {
+		var canRecovs = make([]bool, fileNamesLen)
+		for i, name := range fileNames {
+			fmt.Printf("(%d) ", i)
 			prefixName := check_name(filePrefixNames, name)
 			if fileNamesLen == 1 {
 				contents_str := check_locate(name, prefixName, trashBoxName)
 				undo(name, contents_str, trashBoxName)
 			} else {
-				contents_str := check_locate(name, prefixName, trashBoxName)
-				fmt.Println(contents_str)
+				if contents_str := check_locate(name, prefixName, trashBoxName); contents_str == "" {
+					canRecovs[i] = false
+				} else {
+					canRecovs[i] = true
+				}
+
 			}
+		}
+		if fileNamesLen != 1 {
+			index := get_index_from_selector(canRecovs, fileNamesLen)
+			fmt.Println(index)
 		}
 	}
 }
