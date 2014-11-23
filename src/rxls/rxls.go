@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strconv"
 )
 
 var (
@@ -26,14 +25,6 @@ func make_trash_box(dirName string) {
 func exist_file(name string) bool {
 	_, err := os.Stat(name)
 	return err == nil
-}
-
-func isDirectory(name string) bool {
-	fInfo, err := os.Stat(name)
-	if err != nil {
-		return false
-	}
-	return fInfo.IsDir()
 }
 
 func read_gorm_cfg() string {
@@ -69,12 +60,6 @@ func set_trashBox_cfg() string {
 	make_trash_box(trashBoxName)
 
 	return trashBoxName
-}
-
-func show_path(path string, gormFlagv bool) {
-	if gormFlagv {
-		fmt.Println(path)
-	}
 }
 
 func check_match_num(infos []os.FileInfo, pattern string) int {
@@ -116,7 +101,7 @@ func check_name(names []string, pattern string) string {
 	return ""
 }
 
-func check_locate(name, prefixName, trashBoxName string) string {
+func check_location(name, prefixName, trashBoxName string) string {
 	readerFile, _ := os.OpenFile(trashBoxName+FILE_PATH_DIR+"/"+prefixName, os.O_RDONLY, 0600)
 	reader := bufio.NewReader(readerFile)
 	contents, _, _ := reader.ReadLine()
@@ -130,68 +115,7 @@ func check_locate(name, prefixName, trashBoxName string) string {
 	return contents_str
 }
 
-func check_can_recov(contents_str string) bool {
-	if contents_str == "" {
-		return false
-	} else {
-		return true
-	}
-}
-
-func show_selector(canRecovs []bool, fileNamesLen int) {
-	fmt.Print("you will select one from (")
-	for i, canRecov := range canRecovs {
-		if canRecov {
-			fmt.Print(i)
-			if i != fileNamesLen-1 {
-				fmt.Print(", ")
-			}
-		}
-	}
-	fmt.Print(") > ")
-}
-
-func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
-	show_selector(canRecovs, fileNamesLen)
-	var (
-		str   string
-		index int
-		err   error
-	)
-
-	for {
-		if _, err := fmt.Scanf("%s", &str); err != nil {
-			fmt.Println(err)
-		}
-		index, err = strconv.Atoi(str)
-		if err != nil {
-			fmt.Println(err)
-		} else if index < 0 || index >= fileNamesLen {
-			fmt.Println("Error: this number is invalid range")
-		} else if canRecovs[index] {
-			break
-		} else {
-			fmt.Println("Error: this option do not know original location")
-		}
-		show_selector(canRecovs, fileNamesLen)
-	}
-	return index
-}
-
-func undo(name, contents_str, trashBoxName string) {
-	if exist_file(contents_str) {
-		fmt.Println("Error:", contents_str, "is already exist")
-	} else {
-		if err := os.Rename(trashBoxName+"/"+name, contents_str); err != nil {
-			fmt.Println(contents_str)
-			fmt.Println(err)
-		} else {
-			os.Remove(trashBoxName + FILE_PATH_DIR + "/" + name + GORM_EXTENDED)
-		}
-	}
-}
-
-func operation_of_undo(filename, trashBoxName string) {
+func operation_of_ls(filename, trashBoxName string) {
 	var (
 		i    int
 		name string
@@ -207,7 +131,7 @@ func operation_of_undo(filename, trashBoxName string) {
 		for i, name = range fileNames {
 			fmt.Printf("(%d) ", i)
 			prefixName := check_name(filePrefixNames, name)
-			check_locate(name, prefixName, trashBoxName)
+			check_location(name, prefixName, trashBoxName)
 		}
 	}
 }
@@ -220,9 +144,9 @@ func main() {
 
 	flag.Parse()
 	if flag.NArg() == 0 {
-		operation_of_undo("", trashBoxName)
+		operation_of_ls("", trashBoxName)
 	}
 	for i := 0; i < flag.NArg(); i++ {
-		operation_of_undo(flag.Args()[i], trashBoxName)
+		operation_of_ls(flag.Args()[i], trashBoxName)
 	}
 }
