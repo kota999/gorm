@@ -237,8 +237,6 @@ func main() {
 		gormFlagv    bool
 	)
 
-	flag.BoolVar(&gormFlagr, "R", false, "throw away directory, recursively")
-	flag.BoolVar(&gormFlagr, "r", false, "it is same option, -R")
 	flag.BoolVar(&gormFlagv, "V", false, "show file name before throw away")
 	flag.BoolVar(&gormFlagv, "v", false, "it is same option, -V")
 	flag.Parse()
