@@ -57,16 +57,6 @@ func write_cfg(dirName string) {
 	writer.Flush()
 }
 
-func write_filePath(fullPath, filePathCfg string) {
-	var writer *bufio.Writer
-	fullPathVec := []byte(fullPath)
-
-	writeFile, _ := os.OpenFile(filePathCfg+GORM_EXTENDED, os.O_WRONLY|os.O_CREATE, 0600)
-	writer = bufio.NewWriter(writeFile)
-	writer.Write(fullPathVec)
-	writer.Flush()
-}
-
 func set_trashBox_cfg(trashBoxName string) string {
 	if trashBoxName != "" {
 		fmt.Println("you setted trash-box directory option, so throw-away and trash-box clear options are not effective.")
@@ -106,9 +96,6 @@ func remove(path, newPath string) {
 		if err := os.Rename(path, newPath); err != nil {
 			fmt.Println(newPath)
 			fmt.Println(err)
-		} else {
-			fullPath, _ := filepath.Abs(path)
-			write_filePath(fullPath, newPath)
 		}
 	}
 }
@@ -119,9 +106,6 @@ func Reremove(path string, newPath string, i int) {
 	} else {
 		if err := os.Rename(path, newPath+"."+strconv.Itoa(i)); err != nil {
 			fmt.Println(err)
-		} else {
-			fullPath, _ := filepath.Abs(path)
-			write_filePath(fullPath, newPath+"."+strconv.Itoa(i))
 		}
 	}
 }
