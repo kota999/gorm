@@ -126,7 +126,7 @@ func operation_of_ls(filename, trashBoxName string) {
 	fileNames, fileNamesLen := check_match(fileInfo, filename)
 	filePrefixNames, _ := check_match(fileInfoPrefix, filename)
 	if fileNamesLen == 0 {
-		fmt.Println(filename, "is not backup")
+		fmt.Println(filename+"*", "is not match")
 	} else {
 		for i, name = range fileNames {
 			fmt.Printf("(%d) ", i)
