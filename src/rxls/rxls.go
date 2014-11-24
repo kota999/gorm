@@ -10,11 +10,12 @@ import (
 )
 
 var (
-	HOME          = os.Getenv("HOME")
-	CFG_FILE      = HOME + "/.gorm"
-	DEFAULT_DIR   = HOME + "/.trashbox"
-	FILE_PATH_DIR = "/.prefix"
-	GORM_EXTENDED = ".gorm"
+	HOME               = os.Getenv("HOME")
+	CFG_FILE           = HOME + "/.gorm"
+	DEFAULT_DIR        = HOME + "/.trashbox"
+	FILE_PATH_DIR      = "/.prefix"
+	FILE_PATH_DIR_NAME = ".prefix"
+	GORM_EXTENDED      = ".gorm"
 )
 
 func make_trash_box(dirName string) {
@@ -66,8 +67,10 @@ func check_match_num(infos []os.FileInfo, pattern string) int {
 	var sum = 0
 	for _, info := range infos {
 		var name = info.Name()
-		if matched, _ := path.Match(pattern+"*", name); matched {
-			sum += 1
+		if name != FILE_PATH_DIR_NAME {
+			if matched, _ := path.Match(pattern+"*", name); matched {
+				sum += 1
+			}
 		}
 	}
 	return sum
@@ -78,9 +81,11 @@ func check_match_names(infos []os.FileInfo, pattern string, num int) []string {
 	var names = make([]string, num)
 	for _, info := range infos {
 		var name = info.Name()
-		if matched, _ := path.Match(pattern+"*", name); matched {
-			names[i] = name
-			i += 1
+		if name != FILE_PATH_DIR_NAME {
+			if matched, _ := path.Match(pattern+"*", name); matched {
+				names[i] = name
+				i += 1
+			}
 		}
 	}
 	return names

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 var (
@@ -36,19 +37,37 @@ func isDirectory(name string) bool {
 	return fInfo.IsDir()
 }
 
+//func read_cfg() string {
+//contents, _ := ioutil.ReadFile(CFG_FILE)
+//return string(contents)
+//}
+
 func read_cfg() string {
-	contents, _ := ioutil.ReadFile(CFG_FILE)
+	readFile, _ := os.OpenFile(CFG_FILE, os.O_RDONLY, 0600)
+	reader := bufio.NewReader(readFile)
+	contents, _, _ := reader.ReadLine()
+	return string(contents)
+}
+
+func read_file(filename string) string {
+	contents, _ := ioutil.ReadFile(filename)
 	return string(contents)
 }
 
 func write_cfg(name, cfgName string) {
+	var nameVec []byte
 	if cfgName == "" {
 		os.Remove(CFG_FILE)
 		cfgName = CFG_FILE
 	}
-	var writer *bufio.Writer
-	nameVec := []byte(name)
+	read_str := read_file(cfgName)
+	if read_str == "" {
+		nameVec = []byte(name)
+	} else {
+		nameVec = []byte(read_str + "\n" + name)
+	}
 
+	var writer *bufio.Writer
 	writeFile, _ := os.OpenFile(cfgName, os.O_WRONLY|os.O_CREATE, 0600)
 	writer = bufio.NewWriter(writeFile)
 	writer.Write(nameVec)
@@ -83,6 +102,8 @@ func write_file_cfg(path, trashBoxName string, i int) {
 
 	fullPath, _ := filepath.Abs(path)
 	write_cfg(fullPath, fileCfg)
+	now := time.Now().String()[:19]
+	write_cfg(now, fileCfg)
 }
 
 func show_path(path string, gormFlagv bool) {

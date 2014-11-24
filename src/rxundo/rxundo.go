@@ -11,11 +11,12 @@ import (
 )
 
 var (
-	HOME          = os.Getenv("HOME")
-	CFG_FILE      = HOME + "/.gorm"
-	DEFAULT_DIR   = HOME + "/.trashbox"
-	FILE_PATH_DIR = "/.prefix"
-	GORM_EXTENDED = ".gorm"
+	HOME               = os.Getenv("HOME")
+	CFG_FILE           = HOME + "/.gorm"
+	DEFAULT_DIR        = HOME + "/.trashbox"
+	FILE_PATH_DIR      = "/.prefix"
+	FILE_PATH_DIR_NAME = ".prefix"
+	GORM_EXTENDED      = ".gorm"
 )
 
 func make_trash_box(dirName string) {
@@ -81,8 +82,10 @@ func check_match_num(infos []os.FileInfo, pattern string) int {
 	var sum = 0
 	for _, info := range infos {
 		var name = info.Name()
-		if matched, _ := path.Match(pattern+"*", name); matched {
-			sum += 1
+		if name != FILE_PATH_DIR_NAME {
+			if matched, _ := path.Match(pattern+"*", name); matched {
+				sum += 1
+			}
 		}
 	}
 	return sum
@@ -93,9 +96,11 @@ func check_match_names(infos []os.FileInfo, pattern string, num int) []string {
 	var names = make([]string, num)
 	for _, info := range infos {
 		var name = info.Name()
-		if matched, _ := path.Match(pattern+"*", name); matched {
-			names[i] = name
-			i += 1
+		if name != FILE_PATH_DIR_NAME {
+			if matched, _ := path.Match(pattern+"*", name); matched {
+				names[i] = name
+				i += 1
+			}
 		}
 	}
 	return names
@@ -116,20 +121,28 @@ func check_name(names []string, pattern string) string {
 	return ""
 }
 
-func check_locate(name, prefixName, trashBoxName string, gormFlagv bool) string {
+func check_locate(name, prefixName, trashBoxName string, gormFlagv, fileLenFlag bool) (string, string) {
 	readerFile, _ := os.OpenFile(trashBoxName+FILE_PATH_DIR+"/"+prefixName, os.O_RDONLY, 0600)
 	reader := bufio.NewReader(readerFile)
 	contents, _, _ := reader.ReadLine()
 	contents_str := string(contents)
-	if gormFlagv {
+	contents, _, _ = reader.ReadLine()
+	date_str := string(contents)
+	if fileLenFlag {
 		fmt.Print(name, " 's original location : ")
 		if contents_str == "" {
 			fmt.Println("do not know original location, you will recover manually")
 		} else {
 			fmt.Println(contents_str)
 		}
+		if date_str == "" {
+			date_str = "did not take the date log of rx executed"
+		}
+		if gormFlagv {
+			fmt.Println("    date of rx executed :", date_str)
+		}
 	}
-	return contents_str
+	return contents_str, date_str
 }
 
 func check_can_recov(contents_str string) bool {
@@ -222,7 +235,7 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 				fmt.Printf("(%d) ", i)
 			}
 			prefixName := check_name(filePrefixNames, name)
-			contents_str = check_locate(name, prefixName, trashBoxName, gormFlagv || fileNamesLen != 1)
+			contents_str, _ = check_locate(name, prefixName, trashBoxName, gormFlagv, fileNamesLen != 1)
 			prefixNames[i] = contents_str
 			canRecovs[i] = check_can_recov(contents_str)
 		}
