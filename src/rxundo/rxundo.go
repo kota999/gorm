@@ -5,58 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"rx_common"
+	"rx_pv"
 	"strconv"
 )
 
-func check_match_num(infos []os.FileInfo, pattern string) int {
-	var sum = 0
-	for _, info := range infos {
-		var name = info.Name()
-		if name != rx_common.FILE_PATH_DIR {
-			if matched, _ := path.Match(pattern+"*", name); matched {
-				sum += 1
-			}
-		}
-	}
-	return sum
-}
-
-func check_match_names(infos []os.FileInfo, pattern string, num int) []string {
-	var i = 0
-	var names = make([]string, num)
-	for _, info := range infos {
-		var name = info.Name()
-		if name != rx_common.FILE_PATH_DIR {
-			if matched, _ := path.Match(pattern+"*", name); matched {
-				names[i] = name
-				i += 1
-			}
-		}
-	}
-	return names
-}
-
-func check_match(infos []os.FileInfo, pattern string) ([]string, int) {
-	num := check_match_num(infos, pattern)
-	names := check_match_names(infos, pattern, num)
-	return names, num
-}
-
-func check_name(names []string, pattern string) string {
-	for _, name := range names {
-		if matched, _ := path.Match(rx_common.Get_prefix_filename(pattern), name); matched {
-			return name
-		}
-	}
-	return ""
-}
-
-func check_location(name, prefixName, trashBoxName string, rxFlagv, fileLenFlag bool) (string, string) {
-	reader := rx_common.Generate_reader(rx_common.Get_fullPath_prefix(prefixName, trashBoxName))
-	contents_str := rx_common.ReadLine(reader)
-	date_str := rx_common.ReadLine(reader)
+func show_location(name, contents_str, date_str string, rxFlagv, fileLenFlag bool) {
 	if fileLenFlag {
 		fmt.Print(name, " 's original location : ")
 		if contents_str == "" {
@@ -71,7 +25,6 @@ func check_location(name, prefixName, trashBoxName string, rxFlagv, fileLenFlag 
 			fmt.Println("    date of rx executed :", date_str)
 		}
 	}
-	return contents_str, date_str
 }
 
 func check_can_recov(contents_str string) bool {
@@ -82,12 +35,25 @@ func check_can_recov(contents_str string) bool {
 	}
 }
 
-func show_selector(canRecovs []bool, fileNamesLen int) {
+func get_can_recov_num(canRecovs []bool) int {
+	var sum = 0
+	for _, canRecov := range canRecovs {
+		if canRecov {
+			sum++
+		}
+	}
+	return sum
+}
+
+func show_selector(canRecovs []bool) {
+	var index = 0
+	canRecov_num := get_can_recov_num(canRecovs)
 	fmt.Print("you will select one from (")
 	for i, canRecov := range canRecovs {
 		if canRecov {
 			fmt.Print(i)
-			if i != fileNamesLen-1 {
+			index++
+			if index < canRecov_num {
 				fmt.Print(", ")
 			}
 		}
@@ -96,7 +62,7 @@ func show_selector(canRecovs []bool, fileNamesLen int) {
 }
 
 func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
-	show_selector(canRecovs, fileNamesLen)
+	show_selector(canRecovs)
 	var (
 		str   string
 		index int
@@ -117,7 +83,7 @@ func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
 		} else {
 			fmt.Println("Error: this option do not know original location")
 		}
-		show_selector(canRecovs, fileNamesLen)
+		show_selector(canRecovs)
 	}
 	return index
 }
@@ -149,8 +115,8 @@ func operation_of_undo(filename, trashBoxName string, rxFlagv bool) {
 	fmt.Println("--> recovering", filename+"*")
 	fileInfo, _ := ioutil.ReadDir(trashBoxName)
 	fileInfoPrefix, _ := ioutil.ReadDir(rx_common.Get_filePrefixDir(trashBoxName))
-	fileNames, fileNamesLen := check_match(fileInfo, filename)
-	filePrefixNames, filePrefixNamesLen := check_match(fileInfoPrefix, filename)
+	fileNames, fileNamesLen := rx_pv.Check_match(fileInfo, filename)
+	filePrefixNames, filePrefixNamesLen := rx_pv.Check_match(fileInfoPrefix, filename)
 	if fileNamesLen == 0 {
 		fmt.Println("Error:", filename, "is not backuped")
 	} else if filePrefixNamesLen == 0 {
@@ -163,16 +129,17 @@ func operation_of_undo(filename, trashBoxName string, rxFlagv bool) {
 			if fileNamesLen != 1 {
 				fmt.Printf("(%d) ", i)
 			}
-			prefixName := check_name(filePrefixNames, name)
-			contents_str, _ = check_location(name, prefixName, trashBoxName, rxFlagv, fileNamesLen != 1)
+			prefixName := rx_pv.Check_name(filePrefixNames, name)
+			contents_str, date_str := rx_pv.Check_location(name, prefixName, trashBoxName)
+			show_location(name, contents_str, date_str, rxFlagv, fileNamesLen != 1)
 			prefixNames[i] = contents_str
 			canRecovs[i] = check_can_recov(contents_str)
 		}
 		if fileNamesLen != 1 {
 			index = get_index_from_selector(canRecovs, fileNamesLen)
-			name = fileNames[index]
-			contents_str = prefixNames[index]
 		}
+		name = fileNames[index]
+		contents_str = prefixNames[index]
 		undo(name, contents_str, trashBoxName)
 	}
 }
