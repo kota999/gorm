@@ -185,7 +185,10 @@ func undo(name, contents_str, trashBoxName string) {
 		fmt.Println("Error:", contents_str, "is already exist")
 	} else {
 		if err := os.Rename(trashBoxName+"/"+name, contents_str); err != nil {
-			fmt.Println(contents_str)
+			if contents_str == "" {
+				contents_str = "you will input file name"
+			}
+			fmt.Println("target file or directory :", contents_str)
 			fmt.Println(err)
 		} else {
 			os.Remove(trashBoxName + FILE_PATH_DIR + "/" + name + GORM_EXTENDED)
@@ -207,23 +210,26 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 	fileNames, fileNamesLen := check_match(fileInfo, filename)
 	filePrefixNames, filePrefixNamesLen := check_match(fileInfoPrefix, filename)
 	if fileNamesLen == 0 {
-		fmt.Println("Error:", filename, "is not backup")
+		fmt.Println("Error:", filename, "is not backuped")
 	} else if filePrefixNamesLen == 0 {
 		fmt.Println("Error: do not know", filename, "'s original location")
 		fmt.Println("you will recover manually")
 	} else {
 		var canRecovs = make([]bool, fileNamesLen)
+		var prefixNames = make([]string, fileNamesLen)
 		for i, name = range fileNames {
 			if fileNamesLen != 1 {
 				fmt.Printf("(%d) ", i)
 			}
 			prefixName := check_name(filePrefixNames, name)
 			contents_str = check_locate(name, prefixName, trashBoxName, gormFlagv || fileNamesLen != 1)
+			prefixNames[i] = contents_str
 			canRecovs[i] = check_can_recov(contents_str)
 		}
 		if fileNamesLen != 1 {
 			index = get_index_from_selector(canRecovs, fileNamesLen)
 			name = fileNames[index]
+			contents_str = prefixNames[index]
 		}
 		undo(name, contents_str, trashBoxName)
 	}
@@ -233,7 +239,6 @@ func main() {
 
 	var (
 		trashBoxName string
-		gormFlagr    bool
 		gormFlagv    bool
 	)
 
@@ -243,8 +248,11 @@ func main() {
 
 	trashBoxName = set_trashBox_cfg()
 
+	if gormFlagv {
+		fmt.Print("target files : ")
+		fmt.Println(flag.Args())
+	}
 	for i := 0; i < flag.NArg(); i++ {
-		show_path(flag.Args()[i], gormFlagv)
 		operation_of_undo(flag.Args()[i], trashBoxName, gormFlagv)
 	}
 
