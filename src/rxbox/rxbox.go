@@ -1,77 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"rx_common"
 	"strings"
 )
-
-var (
-	HOME          = os.Getenv("HOME")
-	CFG_FILE      = HOME + "/.gorm"
-	DEFAULT_DIR   = HOME + "/.trashbox"
-	FILE_PATH_DIR = ".prefix"
-	GORM_EXTENDED = ".gorm"
-)
-
-func make_trash_box(dirName string) {
-	os.Mkdir(dirName, 0777)
-	os.Mkdir(dirName+"/"+FILE_PATH_DIR, 0777)
-}
-
-func exist_file(name string) bool {
-	_, err := os.Stat(name)
-	return err == nil
-}
-
-func isDirectory(name string) bool {
-	fInfo, err := os.Stat(name)
-	if err != nil {
-		return false
-	}
-	return fInfo.IsDir()
-}
-
-func read_cfg() string {
-	contents, _ := ioutil.ReadFile(CFG_FILE)
-	return string(contents)
-}
-
-func write_cfg(dirName string) {
-	os.Remove(CFG_FILE)
-	var writer *bufio.Writer
-	dirVec := []byte(dirName)
-
-	writeFile, _ := os.OpenFile(CFG_FILE, os.O_WRONLY|os.O_CREATE, 0600)
-	writer = bufio.NewWriter(writeFile)
-	writer.Write(dirVec)
-	writer.Flush()
-}
-
-func set_trashBox_cfg(trashBoxName string) string {
-	if trashBoxName != "" {
-		fmt.Println("INFO: you setted trash-box directory option, so trash-box clear options is not effective.")
-		if exist_file(trashBoxName) && isDirectory(trashBoxName) == false {
-			fmt.Println("!! Error !!")
-			fmt.Println("your option directory is existed as file type,")
-			fmt.Println("trash box dir is setted as ./.trash.")
-			trashBoxName = DEFAULT_DIR
-		}
-		write_cfg(trashBoxName)
-	} else if exist_file(CFG_FILE) {
-		trashBoxName = read_cfg()
-	} else {
-		trashBoxName = DEFAULT_DIR
-		write_cfg(trashBoxName)
-	}
-
-	make_trash_box(trashBoxName)
-
-	return trashBoxName
-}
 
 func clear_trash(trashBoxName string) {
 	if err := os.RemoveAll(trashBoxName + "/"); err != nil {
@@ -89,9 +24,10 @@ func remove_trash_box(trashBoxName string) {
 func init_default() {
 	fmt.Println("initializing trash-box configure and clear trash-box.")
 	fmt.Println("INFO: initialized trash-box directory is $HOME/.trashbox.")
-	trashBoxName := set_trashBox_cfg("")
+
+	trashBoxName := rx_common.Set_trashBox_cfg("")
 	remove_trash_box(trashBoxName)
-	trashBoxName = set_trashBox_cfg(DEFAULT_DIR)
+	trashBoxName = rx_common.Set_trashBox_cfg(rx_common.DEFAULT_DIR)
 }
 
 func main() {
@@ -123,7 +59,7 @@ func main() {
 		}
 	}
 
-	trashBoxName = set_trashBox_cfg(trashBoxName)
+	trashBoxName = rx_common.Set_trashBox_cfg(trashBoxName)
 
 	if trashBoxClear && trashBoxCfg == false {
 		clear_trash(trashBoxName)

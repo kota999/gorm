@@ -1,88 +1,20 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
+	"rx_common"
 	"strconv"
 )
-
-var (
-	HOME               = os.Getenv("HOME")
-	CFG_FILE           = HOME + "/.gorm"
-	DEFAULT_DIR        = HOME + "/.trashbox"
-	FILE_PATH_DIR      = "/.prefix"
-	FILE_PATH_DIR_NAME = ".prefix"
-	GORM_EXTENDED      = ".gorm"
-)
-
-func make_trash_box(dirName string) {
-	os.Mkdir(dirName, 0777)
-	os.Mkdir(dirName+"/"+FILE_PATH_DIR, 0777)
-}
-
-func exist_file(name string) bool {
-	_, err := os.Stat(name)
-	return err == nil
-}
-
-func isDirectory(name string) bool {
-	fInfo, err := os.Stat(name)
-	if err != nil {
-		return false
-	}
-	return fInfo.IsDir()
-}
-
-func read_gorm_cfg() string {
-	readerFile, _ := os.OpenFile(CFG_FILE, os.O_RDONLY, 0600)
-	reader := bufio.NewReader(readerFile)
-	contents, _, _ := reader.ReadLine()
-	return string(contents)
-}
-
-func write_cfg(dirName string) {
-	os.Remove(CFG_FILE)
-
-	dirVec := []byte(dirName)
-
-	writeFile, _ := os.OpenFile(CFG_FILE, os.O_WRONLY|os.O_CREATE, 0600)
-	writer := bufio.NewWriter(writeFile)
-	writer.Write(dirVec)
-	writer.Flush()
-}
-
-func set_trashBox_cfg() string {
-	var trashBoxName string
-	if exist_file(CFG_FILE) {
-		if trashBoxName = read_gorm_cfg(); trashBoxName == "" {
-			trashBoxName = DEFAULT_DIR
-			write_cfg(trashBoxName)
-		}
-	} else {
-		trashBoxName = DEFAULT_DIR
-		write_cfg(trashBoxName)
-	}
-
-	make_trash_box(trashBoxName)
-
-	return trashBoxName
-}
-
-func show_path(path string, gormFlagv bool) {
-	if gormFlagv {
-		fmt.Println(path)
-	}
-}
 
 func check_match_num(infos []os.FileInfo, pattern string) int {
 	var sum = 0
 	for _, info := range infos {
 		var name = info.Name()
-		if name != FILE_PATH_DIR_NAME {
+		if name != rx_common.FILE_PATH_DIR {
 			if matched, _ := path.Match(pattern+"*", name); matched {
 				sum += 1
 			}
@@ -96,7 +28,7 @@ func check_match_names(infos []os.FileInfo, pattern string, num int) []string {
 	var names = make([]string, num)
 	for _, info := range infos {
 		var name = info.Name()
-		if name != FILE_PATH_DIR_NAME {
+		if name != rx_common.FILE_PATH_DIR {
 			if matched, _ := path.Match(pattern+"*", name); matched {
 				names[i] = name
 				i += 1
@@ -114,20 +46,17 @@ func check_match(infos []os.FileInfo, pattern string) ([]string, int) {
 
 func check_name(names []string, pattern string) string {
 	for _, name := range names {
-		if matched, _ := path.Match(pattern+GORM_EXTENDED, name); matched {
+		if matched, _ := path.Match(rx_common.Get_prefix_filename(pattern), name); matched {
 			return name
 		}
 	}
 	return ""
 }
 
-func check_locate(name, prefixName, trashBoxName string, gormFlagv, fileLenFlag bool) (string, string) {
-	readerFile, _ := os.OpenFile(trashBoxName+FILE_PATH_DIR+"/"+prefixName, os.O_RDONLY, 0600)
-	reader := bufio.NewReader(readerFile)
-	contents, _, _ := reader.ReadLine()
-	contents_str := string(contents)
-	contents, _, _ = reader.ReadLine()
-	date_str := string(contents)
+func check_location(name, prefixName, trashBoxName string, rxFlagv, fileLenFlag bool) (string, string) {
+	reader := rx_common.Generate_reader(rx_common.Get_fullPath_prefix(prefixName, trashBoxName))
+	contents_str := rx_common.ReadLine(reader)
+	date_str := rx_common.ReadLine(reader)
 	if fileLenFlag {
 		fmt.Print(name, " 's original location : ")
 		if contents_str == "" {
@@ -138,7 +67,7 @@ func check_locate(name, prefixName, trashBoxName string, gormFlagv, fileLenFlag 
 		if date_str == "" {
 			date_str = "did not take the date log of rx executed"
 		}
-		if gormFlagv {
+		if rxFlagv {
 			fmt.Println("    date of rx executed :", date_str)
 		}
 	}
@@ -194,23 +123,23 @@ func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
 }
 
 func undo(name, contents_str, trashBoxName string) {
-	if exist_file(contents_str) {
+	if rx_common.Exist_file(contents_str) {
 		fmt.Println("Error:", contents_str, "is already exist")
 	} else {
-		if err := os.Rename(trashBoxName+"/"+name, contents_str); err != nil {
+		if err := os.Rename(rx_common.Get_fullPath_trash(name, trashBoxName), contents_str); err != nil {
 			if contents_str == "" {
 				contents_str = "you will input file name"
 			}
 			fmt.Println("target file or directory :", contents_str)
 			fmt.Println(err)
 		} else {
-			os.Remove(trashBoxName + FILE_PATH_DIR + "/" + name + GORM_EXTENDED)
+			os.Remove(rx_common.Get_fullPath_prefix(rx_common.Get_prefix_filename(name), trashBoxName))
 			fmt.Println("--> finish recovering to", contents_str)
 		}
 	}
 }
 
-func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
+func operation_of_undo(filename, trashBoxName string, rxFlagv bool) {
 	var (
 		i            int
 		index        int
@@ -219,7 +148,7 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 	)
 	fmt.Println("--> recovering", filename+"*")
 	fileInfo, _ := ioutil.ReadDir(trashBoxName)
-	fileInfoPrefix, _ := ioutil.ReadDir(trashBoxName + FILE_PATH_DIR)
+	fileInfoPrefix, _ := ioutil.ReadDir(rx_common.Get_filePrefixDir(trashBoxName))
 	fileNames, fileNamesLen := check_match(fileInfo, filename)
 	filePrefixNames, filePrefixNamesLen := check_match(fileInfoPrefix, filename)
 	if fileNamesLen == 0 {
@@ -235,7 +164,7 @@ func operation_of_undo(filename, trashBoxName string, gormFlagv bool) {
 				fmt.Printf("(%d) ", i)
 			}
 			prefixName := check_name(filePrefixNames, name)
-			contents_str, _ = check_locate(name, prefixName, trashBoxName, gormFlagv, fileNamesLen != 1)
+			contents_str, _ = check_location(name, prefixName, trashBoxName, rxFlagv, fileNamesLen != 1)
 			prefixNames[i] = contents_str
 			canRecovs[i] = check_can_recov(contents_str)
 		}
@@ -252,21 +181,21 @@ func main() {
 
 	var (
 		trashBoxName string
-		gormFlagv    bool
+		rxFlagv      bool
 	)
 
-	flag.BoolVar(&gormFlagv, "V", false, "show file name before throw away")
-	flag.BoolVar(&gormFlagv, "v", false, "it is same option, -V")
+	flag.BoolVar(&rxFlagv, "V", false, "show file name before throw away")
+	flag.BoolVar(&rxFlagv, "v", false, "it is same option, -V")
 	flag.Parse()
 
-	trashBoxName = set_trashBox_cfg()
+	trashBoxName = rx_common.Get_trashBox_cfg()
 
-	if gormFlagv {
+	if rxFlagv {
 		fmt.Print("target files : ")
 		fmt.Println(flag.Args())
 	}
 	for i := 0; i < flag.NArg(); i++ {
-		operation_of_undo(flag.Args()[i], trashBoxName, gormFlagv)
+		operation_of_undo(flag.Args()[i], trashBoxName, rxFlagv)
 	}
 
 }
