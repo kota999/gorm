@@ -101,21 +101,31 @@ func check_name(names []string, pattern string) string {
 	return ""
 }
 
-func check_location(name, prefixName, trashBoxName string) string {
+func check_location(name, prefixName, trashBoxName string, gormFlagl bool) (string, string) {
 	readerFile, _ := os.OpenFile(trashBoxName+FILE_PATH_DIR+"/"+prefixName, os.O_RDONLY, 0600)
 	reader := bufio.NewReader(readerFile)
 	contents, _, _ := reader.ReadLine()
 	contents_str := string(contents)
+	contents, _, _ = reader.ReadLine()
+	date_str := string(contents)
 	fmt.Print(name, " 's original location : ")
 	if contents_str == "" {
 		fmt.Println("do not know original location, you will recover manually")
 	} else {
 		fmt.Println(contents_str)
 	}
-	return contents_str
+
+	if date_str == "" {
+		date_str = "did not take the date log of rx executed"
+	}
+	if gormFlagl {
+		fmt.Println("    date of rx executed :", date_str)
+	}
+
+	return contents_str, date_str
 }
 
-func operation_of_ls(filename, trashBoxName string) {
+func operation_of_ls(filename, trashBoxName string, gormFlagl bool) {
 	var (
 		i    int
 		name string
@@ -131,22 +141,26 @@ func operation_of_ls(filename, trashBoxName string) {
 		for i, name = range fileNames {
 			fmt.Printf("(%d) ", i)
 			prefixName := check_name(filePrefixNames, name)
-			check_location(name, prefixName, trashBoxName)
+			check_location(name, prefixName, trashBoxName, gormFlagl)
 		}
 	}
 }
 
 func main() {
 
-	var trashBoxName string
+	var (
+		trashBoxName string
+		gormFlagl    bool
+	)
+	flag.BoolVar(&gormFlagl, "l", false, "show file name before throw away")
 
 	trashBoxName = set_trashBox_cfg()
 
 	flag.Parse()
 	if flag.NArg() == 0 {
-		operation_of_ls("", trashBoxName)
+		operation_of_ls("", trashBoxName, gormFlagl)
 	}
 	for i := 0; i < flag.NArg(); i++ {
-		operation_of_ls(flag.Args()[i], trashBoxName)
+		operation_of_ls(flag.Args()[i], trashBoxName, gormFlagl)
 	}
 }
