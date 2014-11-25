@@ -13,7 +13,7 @@ import (
 
 //{{{ func clear_trash(trashBoxName string)
 func clear_trash(trashBoxName string) {
-	if trashBoxName == "" {
+	if trashBoxName == "/" {
 		fmt.Println("!!!!! ileagl option !!!!!")
 		os.Exit(1)
 	}
@@ -27,7 +27,10 @@ func clear_trash(trashBoxName string) {
 
 //{{{ func remove_trash_box(tarshBoxName string)
 func remove_trash_box(trashBoxName string) {
-	if err := os.RemoveAll(trashBoxName + "/"); err != nil {
+	if trashBoxName == "/" {
+		fmt.Println("!!!!! ilegal option !!!!!")
+	}
+	if err := os.RemoveAll(trashBoxName); err != nil {
 		fmt.Println(err)
 	}
 }
@@ -79,7 +82,7 @@ func main() {
 
 	t := rx_common.Set_trashBox_cfg(trashBoxName)
 
-	if trashBoxClear && trashBoxCfg == false {
+	if trashBoxClear && trashBoxCfg == false && t.Get_trashBoxName() != "/" {
 		clear_trash(t.Get_trashBoxName())
 	}
 }
