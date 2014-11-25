@@ -1,5 +1,6 @@
 package main
 
+//{{{ import
 import (
 	"flag"
 	"fmt"
@@ -8,28 +9,45 @@ import (
 	"strings"
 )
 
+//}}}
+
+//{{{ func clear_trash(trashBoxName string)
 func clear_trash(trashBoxName string) {
-	if err := os.RemoveAll(trashBoxName + "/"); err != nil {
+	if trashBoxName == "" {
+		fmt.Println("!!!!! ileagl option !!!!!")
+		os.Exit(1)
+	}
+	if err := os.RemoveAll(trashBoxName); err != nil {
 		fmt.Println(err)
 	}
 	os.Mkdir(trashBoxName, 0777)
 }
 
+//}}}
+
+//{{{ func remove_trash_box(tarshBoxName string)
 func remove_trash_box(trashBoxName string) {
 	if err := os.RemoveAll(trashBoxName + "/"); err != nil {
 		fmt.Println(err)
 	}
 }
 
+//}}}
+
+//{{{ func init_default()
 func init_default() {
 	fmt.Println("initializing trash-box configure and clear trash-box.")
 	fmt.Println("INFO: initialized trash-box directory is $HOME/.trashbox.")
 
-	trashBoxName := rx_common.Set_trashBox_cfg("")
-	remove_trash_box(trashBoxName)
-	trashBoxName = rx_common.Set_trashBox_cfg(rx_common.DEFAULT_DIR)
+	var t *rx_common.TrashBox
+	t = rx_common.Set_trashBox_cfg("")
+	remove_trash_box(t.Get_trashBoxName())
+	t = rx_common.Set_trashBox_cfg(rx_common.DEFAULT_DIR)
 }
 
+//}}}
+
+//{{{ main
 func main() {
 
 	var (
@@ -59,9 +77,11 @@ func main() {
 		}
 	}
 
-	trashBoxName = rx_common.Set_trashBox_cfg(trashBoxName)
+	t := rx_common.Set_trashBox_cfg(trashBoxName)
 
 	if trashBoxClear && trashBoxCfg == false {
-		clear_trash(trashBoxName)
+		clear_trash(t.Get_trashBoxName())
 	}
 }
+
+//}}}

@@ -1,17 +1,21 @@
 package main
 
+//{{{ import
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"rx_common"
 	"rx_pv"
 	"strconv"
 )
 
-func show_location(name, contents_str, date_str string, rxFlagv, fileLenFlag bool) {
+//}}}
+
+//{{{ func show_location(name, contents_str, date_str string, index int, rxFlagv bool, fileLenFlag bool)
+func show_location(name, contents_str, date_str string, index int, rxFlagv bool, fileLenFlag bool) {
 	if fileLenFlag {
+		fmt.Printf("(%d) ", index)
 		fmt.Print(name, " 's original location : ")
 		if contents_str == "" {
 			fmt.Println("do not know original location, you will recover manually")
@@ -27,33 +31,52 @@ func show_location(name, contents_str, date_str string, rxFlagv, fileLenFlag boo
 	}
 }
 
-func check_can_recov(contents_str string) bool {
+//}}}
+
+//{{{ type Selector struct
+type Selector struct {
+	CanRecovs    []bool
+	PrefixNames  []string
+	CanRecovsNum int
+	Length       int
+}
+
+//}}}
+
+//{{{ func (s *Selector) Check_can_recov(contents_str string, index int)
+func (s *Selector) Check_can_recov(contents_str string, index int) {
 	if contents_str == "" {
-		return false
+		s.CanRecovs[index] = false
 	} else {
-		return true
+		s.CanRecovs[index] = true
 	}
 }
 
-func get_can_recov_num(canRecovs []bool) int {
+//}}}
+
+//{{{ func (s *Selector) Get_can_recov_num()
+func (s *Selector) Get_can_recov_num() {
 	var sum = 0
-	for _, canRecov := range canRecovs {
+	for _, canRecov := range s.CanRecovs {
 		if canRecov {
 			sum++
 		}
 	}
-	return sum
+	s.CanRecovsNum = sum
 }
 
-func show_selector(canRecovs []bool) {
+//}}}
+
+//{{{ func (s *Selector) Show_selector()
+func (s *Selector) Show_selector() {
+	s.Get_can_recov_num()
 	var index = 0
-	canRecov_num := get_can_recov_num(canRecovs)
 	fmt.Print("you will select one from (")
-	for i, canRecov := range canRecovs {
+	for i, canRecov := range s.CanRecovs {
 		if canRecov {
 			fmt.Print(i)
 			index++
-			if index < canRecov_num {
+			if index < s.CanRecovsNum {
 				fmt.Print(", ")
 			}
 		}
@@ -61,14 +84,20 @@ func show_selector(canRecovs []bool) {
 	fmt.Print(") > ")
 }
 
-func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
-	show_selector(canRecovs)
+//}}}
+
+//{{{ func (s *Selector) Get_index_from_selector() int
+func (s *Selector) Get_index_from_selector() int {
+	s.Show_selector()
 	var (
 		str   string
 		index int
 		err   error
 	)
 
+	if s.Length == 1 {
+		return 0
+	}
 	for {
 		if _, err := fmt.Scanf("%s", &str); err != nil {
 			fmt.Println(err)
@@ -76,93 +105,97 @@ func get_index_from_selector(canRecovs []bool, fileNamesLen int) int {
 		index, err = strconv.Atoi(str)
 		if err != nil {
 			fmt.Println(err)
-		} else if index < 0 || index >= fileNamesLen {
+		} else if index < 0 || index >= s.Length {
 			fmt.Println("Error: this number is invalid range")
-		} else if canRecovs[index] {
+		} else if s.CanRecovs[index] {
 			break
 		} else {
 			fmt.Println("Error: this option do not know original location")
 		}
-		show_selector(canRecovs)
+		s.Show_selector()
 	}
 	return index
 }
 
-func undo(name, contents_str, trashBoxName string) {
+//}}}
+
+//{{{ func (s *Selector) Locate(filePrefixNames []string, pattern string, t *rx_common.TrashBox, rxFlagv bool)
+func (s *Selector) Locate(filePrefixNames []string, pattern string, index int, t *rx_common.TrashBox, rxFlagv bool) {
+	contents_str, date_str := rx_pv.Get_prefix(filePrefixNames, pattern, t)
+	show_location(pattern, contents_str, date_str, index, rxFlagv, s.Length != 1)
+	s.Check_can_recov(contents_str, index)
+	s.PrefixNames[index] = contents_str
+}
+
+//}}}
+
+//{{{ func undo(name string, contents_str string, t *rx_common.TrashBox)
+func undo(name string, contents_str string, t *rx_common.TrashBox) {
 	if rx_common.Exist_file(contents_str) {
 		fmt.Println("Error:", contents_str, "is already exist")
 	} else {
-		if err := os.Rename(rx_common.Get_fullPath_trash(name, trashBoxName), contents_str); err != nil {
+		if err := os.Rename(t.Get_fullPath_trash(name), contents_str); err != nil {
 			if contents_str == "" {
 				contents_str = "you will input file name"
 			}
 			fmt.Println("target file or directory :", contents_str)
 			fmt.Println(err)
 		} else {
-			os.Remove(rx_common.Get_fullPath_prefix(rx_common.Get_prefix_filename(name), trashBoxName))
+			os.Remove(t.Get_fullPath_prefix(rx_common.Get_prefix_filename(name)))
 			fmt.Println("--> finish recovering to", contents_str)
 		}
 	}
 }
 
-func operation_of_undo(filename, trashBoxName string, rxFlagv bool) {
+//}}}
+
+//{{{ func operation_of_undo(filename string, t *rx_common.TrashBox, rxFlagv bool)
+func operation_of_undo(filename string, t *rx_common.TrashBox, rxFlagv bool) {
 	var (
-		i            int
-		index        int
-		name         string
-		contents_str string
+		i    int
+		name string
 	)
 	fmt.Println("--> recovering", filename+"*")
-	fileInfo, _ := ioutil.ReadDir(trashBoxName)
-	fileInfoPrefix, _ := ioutil.ReadDir(rx_common.Get_filePrefixDir(trashBoxName))
-	fileNames, fileNamesLen := rx_pv.Check_match(fileInfo, filename)
-	filePrefixNames, filePrefixNamesLen := rx_pv.Check_match(fileInfoPrefix, filename)
+	fileNames, fileNamesLen := rx_pv.Get_match(t.Get_trashBoxName(), filename)
+	filePrefixNames, filePrefixNamesLen := rx_pv.Get_match(t.Get_filePrefixDir(), filename)
 	if fileNamesLen == 0 {
 		fmt.Println("Error:", filename, "is not backuped")
 	} else if filePrefixNamesLen == 0 {
 		fmt.Println("Error: do not know", filename, "'s original location")
 		fmt.Println("you will recover manually")
 	} else {
-		var canRecovs = make([]bool, fileNamesLen)
-		var prefixNames = make([]string, fileNamesLen)
+		s := &Selector{make([]bool, fileNamesLen), make([]string, fileNamesLen), 0, fileNamesLen}
 		for i, name = range fileNames {
-			if fileNamesLen != 1 {
-				fmt.Printf("(%d) ", i)
-			}
-			prefixName := rx_pv.Check_name(filePrefixNames, name)
-			contents_str, date_str := rx_pv.Check_location(name, prefixName, trashBoxName)
-			show_location(name, contents_str, date_str, rxFlagv, fileNamesLen != 1)
-			prefixNames[i] = contents_str
-			canRecovs[i] = check_can_recov(contents_str)
+			s.Locate(filePrefixNames, name, i, t, rxFlagv)
 		}
-		if fileNamesLen != 1 {
-			index = get_index_from_selector(canRecovs, fileNamesLen)
-		}
-		name = fileNames[index]
-		contents_str = prefixNames[index]
-		undo(name, contents_str, trashBoxName)
+		index := s.Get_index_from_selector()
+		undo(fileNames[index], s.PrefixNames[index], t)
 	}
 }
 
+//}}}
+
+//{{{ func main()
 func main() {
 
 	var (
-		trashBoxName string
-		rxFlagv      bool
+		rxFlagv bool
 	)
 
 	flag.BoolVar(&rxFlagv, "V", false, "show file name before throw away")
 	flag.BoolVar(&rxFlagv, "v", false, "it is same option, -V")
 	flag.Parse()
 
-	trashBoxName = rx_common.Get_trashBox_cfg()
+	t := rx_common.Get_trashBox_cfg()
 
 	if rxFlagv {
 		fmt.Print("target files : ")
 		fmt.Println(flag.Args())
 	}
 	for i := 0; i < flag.NArg(); i++ {
-		operation_of_undo(flag.Args()[i], trashBoxName, rxFlagv)
+		operation_of_undo(flag.Args()[i], t, rxFlagv)
 	}
 
 }
+
+//}}
