@@ -1,16 +1,29 @@
 package rx_pv
 
+//
+// This package is operation pattern match, search logging file, get file original prefix.
+// This package 's function is used rxls, rxundo command.
+// For use summary, ushow list of ndo remove and backup files and directories.
+//
+
 //{{{ import
 import (
+	// For read/write in file
 	"io/ioutil"
+	// For operation file and environment.
 	"os"
+	// For operation filename and file path.
 	"path"
+	// For rx command series utilty package
 	"rx_common"
 )
 
 //}}}
 
 //{{{ type FileInfo struct
+//
+// Operation file path, name structure (working like class)
+//
 type FileInfo struct {
 	infos []os.FileInfo
 }
