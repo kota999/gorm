@@ -4,21 +4,23 @@ package main
 // This source file is rx command source.
 //
 // rx command is remove + backup command.
-// rx [-r|-R] [-v|-V] NAME
+//
+// Description of rx command.
 // Throw away NAME into trashbox directory, default trashbox name is $HOME/.trahbox.
 // If you will change trahbox path, rename trashbox path in rx configure file ($HOME/.rx)
 // or execute rxbox command as below.
 // rxbox -box TRASHBOX_NAME
+//
+// Options
+// rx [-r|-R] [-v|-V] NAME
+// [-r|-R] : execute rx command recursively.
+// [-v|-V] : show rx command process.
 
 //{{{ import
 import (
-	// For analyzing standar input, set option and target file or dirctory.
 	"flag"
-	// For standard out.
 	"fmt"
-	// For operation file and environment.
 	"os"
-	// For operation file nad filapath.
 	"path/filepath"
 	// For rx command series utilty.
 	"rx_common"
@@ -132,8 +134,8 @@ func main() {
 	// And set not flag standard input.
 	flag.Parse()
 
-	// Get trashbox structure from rx comannd series configure file. (configure filename is $HOME/.rx)
-	// This trashbox structure has trashbox name, get path name into trashbox, operation trashbox path,,,
+	// Get TrashBox structure from rx comannd series configure file. (configure filename is $HOME/.rx)
+	// This TrashBox structure has trashbox name, get path name into trashbox, operation trashbox path,,,
 	t := rx_common.Get_trashBox_cfg()
 
 	// Execute remove + backup command recursively.

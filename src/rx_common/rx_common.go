@@ -12,19 +12,12 @@ package rx_common
 
 //{{{ import
 import (
-	// For read/write file.
 	"bufio"
-	// For standard out.
 	"fmt"
-	// For read/write file.
 	"io/ioutil"
-	// For operation of file and environment.
 	"os"
-	// For operation filename and filepaht.
 	"path/filepath"
-	// For cast string to int or int to string.
 	"strconv"
-	// For time stamp.
 	"time"
 )
 
@@ -359,7 +352,7 @@ func Set_trashBox_cfg(trashBoxName string) *TrashBox {
 	// Get instance of structure of TrashBox, this is generated from your trashbox name in your command option.
 	var t *TrashBox = &TrashBox{trashBoxName}
 	// Check if your trahshbox name is empty.
-	if t.Get_trashBoxName() != "" {
+	if t.Get_trashBoxName() != "" || t.Get_trashBoxName() != "/" {
 
 		//  Standard out message, any trashbox options is not effective for writing trashbox name in configure file.
 		fmt.Println("INFO: you setted trash-box directory option, so trash-box clear options is not effective.")
@@ -381,7 +374,15 @@ func Set_trashBox_cfg(trashBoxName string) *TrashBox {
 
 		// Your trashbox name is empty and exist configure file.
 		// Your trashbox name is readed from configure file.
-		t.Set_trashBoxName(Read_rx_cfg())
+		if trashBoxName := Read_rx_cfg(); trashBoxName == "" {
+
+			// rx configure file is empty case, default dir set.
+			t.Set_trashBoxName(DEFAULT_DIR)
+		} else {
+
+			// Usual case.
+			t.Set_trashBoxName(trashBoxName)
+		}
 	} else {
 
 		// Your trashbox name is empty and not exist configure file.
