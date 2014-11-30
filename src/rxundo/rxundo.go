@@ -139,7 +139,7 @@ func (s *Selector) Show_selector() {
 	s.Get_can_recov_num()
 	var index = 0
 	// Show menu
-	fmt.Print("you will select one from (")
+	fmt.Print("you select one from (")
 	for i, canRecov := range s.CanRecovs {
 
 		// If can recover, standard out index of selection of file or directory.
