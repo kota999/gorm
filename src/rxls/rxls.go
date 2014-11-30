@@ -31,7 +31,7 @@ import (
 func show_location(name, contents_str, date_str string, rxFlagl bool) {
 
 	// View origininal path of backuped file or directory.
-	fmt.Print(name, " 's original location : ")
+	fmt.Print(name, " original location : ")
 	if contents_str == "" {
 
 		// Not logging original path caes.

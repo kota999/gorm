@@ -20,8 +20,8 @@ package main
 //
 // view menu as below,
 // --> recovering a*
-// (0) a 's original location : /original/location/a
-// (1) aa 's original location : /original/location/aa
+// (0) a original location : /original/location/a
+// (1) aa original location : /original/location/aa
 // you will select one from (0, 1) >
 //
 // you will select number of mercenary.
@@ -49,7 +49,7 @@ func show_location(name, contents_str, date_str string, index int, rxFlagv bool,
 
 		// View original path of backuped file or directory.
 		fmt.Printf("(%d) ", index)
-		fmt.Print(name, " 's original location : ")
+		fmt.Print(name, " original location : ")
 		if contents_str == "" {
 
 			// Not logging original path case.
@@ -291,7 +291,7 @@ func operation_of_undo(filename string, t *rx_common.TrashBox, rxFlagv bool) {
 	} else if filePrefixNamesLen == 0 {
 
 		// Mattch and all contents is cannot recovered case.
-		fmt.Println("Error: do not know", filename, "'s original location")
+		fmt.Println("Error: do not know", filename, " original location")
 		fmt.Println("you will recover manually")
 	} else {
 
